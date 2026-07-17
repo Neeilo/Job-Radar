@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0B141F">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Job Radar 台中職缺雷達</title>
+<style>
+:root{
+  --bg:#0B141F; --panel:#121F2D; --panel2:#182B3C; --line:#24394C;
+  --text:#E8F0F2; --muted:#7E97A6;
+  --sweep:#43E0C2; --warn:#FFB454; --alert:#FF6B6B; --ok:#6FE29B;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{background:var(--bg)}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif;
+  background:var(--bg);color:var(--text);min-height:100vh;
+  padding-bottom:calc(64px + env(safe-area-inset-bottom));
+}
+main{max-width:640px;margin:0 auto;padding:14px 14px 24px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:var(--sweep);text-transform:uppercase}
+h1{font-size:20px;font-weight:700;letter-spacing:.02em;margin-top:2px}
+.sub{color:var(--muted);font-size:12px;font-family:var(--mono)}
+section{display:none}
+section.active{display:block}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:12px}
+.card h2{font-size:13px;color:var(--muted);font-weight:600;letter-spacing:.08em;margin-bottom:10px;text-transform:uppercase;font-family:var(--mono)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.grow{flex:1}
+button{font:inherit;color:inherit;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:8px 12px;font-size:13px;cursor:pointer}
+button:active{transform:scale(.97)}
+button.primary{background:rgba(67,224,194,.12);border-color:rgba(67,224,194,.45);color:var(--sweep);font-weight:600}
+button.warn{background:rgba(255,180,84,.1);border-color:rgba(255,180,84,.4);color:var(--warn)}
+button.danger{background:rgba(255,107,107,.08);border-color:rgba(255,107,107,.35);color:var(--alert)}
+button.ghost{background:transparent}
+button.small{padding:5px 9px;font-size:12px;border-radius:7px}
+input,select,textarea{
+  font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);
+  border-radius:9px;padding:8px 10px;font-size:14px;width:100%;
+}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--sweep);outline-offset:1px}
+label.f{display:block;font-size:11px;color:var(--muted);margin:10px 0 4px;font-family:var(--mono);letter-spacing:.06em}
+.pill{font-family:var(--mono);font-size:11px;padding:3px 8px;border-radius:99px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.pill.due{color:var(--alert);border-color:rgba(255,107,107,.5)}
+.pill.soon{color:var(--warn);border-color:rgba(255,180,84,.5)}
+.pill.ok{color:var(--sweep);border-color:rgba(67,224,194,.45)}
+.pill.green{color:var(--ok);border-color:rgba(111,226,155,.5)}
+.chip{font-size:12px;padding:5px 10px;border-radius:99px;border:1px solid var(--line);background:var(--panel2);cursor:pointer;color:var(--text)}
+.chip.on{border-color:var(--sweep);color:var(--sweep);background:rgba(67,224,194,.1)}
+.chip .x{color:var(--muted);margin-left:6px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px;text-align:center}
+.stat b{display:block;font-family:var(--mono);font-size:22px;font-weight:600}
+.stat span{font-size:11px;color:var(--muted)}
+.stat.alert b{color:var(--alert)} .stat.green b{color:var(--ok)} .stat.teal b{color:var(--sweep)}
+.emp{border-top:1px solid var(--line);padding:11px 0}
+.emp:first-of-type{border-top:none;padding-top:2px}
+.emp .name{font-weight:600;font-size:15px}
+.emp .site{color:var(--muted);font-size:12px;margin-left:6px}
+.emp .meta{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:3px}
+.emp .row{margin-top:8px}
+a.link{color:var(--sweep);text-decoration:none;font-size:13px}
+.job{border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px;background:var(--panel2)}
+.job .t{font-weight:600;font-size:15px}
+.job .m{color:var(--muted);font-size:12px;margin-top:2px}
+.dim{display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px dashed var(--line)}
+.dim .n{flex:1;font-size:13px}
+.stars{display:flex;gap:2px}
+.stars button{background:none;border:none;font-size:18px;padding:2px;color:#33475A;line-height:1}
+.stars button.f{color:var(--warn)}
+.verdict{margin-top:10px;padding:8px 10px;border-radius:9px;font-size:13px;font-family:var(--mono)}
+.verdict.go{background:rgba(111,226,155,.1);border:1px solid rgba(111,226,155,.4);color:var(--ok)}
+.verdict.no{background:rgba(255,180,84,.08);border:1px solid rgba(255,180,84,.35);color:var(--warn)}
+.verdict.pending{background:var(--bg);border:1px solid var(--line);color:var(--muted)}
+.verdict.out{background:rgba(255,107,107,.07);border:1px solid rgba(255,107,107,.3);color:var(--alert)}
+.banner{margin-top:12px;border:1px solid rgba(255,180,84,.4);background:rgba(255,180,84,.07);border-radius:12px;padding:10px 12px;font-size:13px;color:var(--warn);display:flex;gap:10px;align-items:center}
+nav{
+  position:fixed;bottom:0;left:0;right:0;background:rgba(11,20,31,.92);backdrop-filter:blur(10px);
+  border-top:1px solid var(--line);display:flex;justify-content:space-around;
+  padding:6px 0 calc(6px + env(safe-area-inset-bottom));z-index:9;
+}
+nav button{background:none;border:none;color:var(--muted);font-size:11px;display:flex;flex-direction:column;gap:2px;align-items:center;padding:4px 14px}
+nav button .ic{font-size:19px}
+nav button.on{color:var(--sweep)}
+.radar-wrap{display:flex;justify-content:center;padding:6px 0 2px}
+.legend{display:flex;gap:14px;justify-content:center;font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:6px}
+.legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}
+.hint{font-size:12px;color:var(--muted);line-height:1.6;margin-top:8px}
+.hr{border:none;border-top:1px solid var(--line);margin:12px 0}
+details.editor{margin-top:8px}
+details.editor summary{cursor:pointer;color:var(--muted);font-size:12px;font-family:var(--mono)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.sweep-g{transform-origin:110px 110px;animation:spin 4.5s linear infinite}
+@media (prefers-reduced-motion:reduce){.sweep-g{animation:none}}
+</style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">Taichung Job Radar</div>
+  <h1>台中職缺主動監測</h1>
+  <div class="sub" id="today"></div>
+
+  <!-- ══════════ TAB 1 雷達 ══════════ -->
+  <section id="tab-radar" class="active">
+    <div class="card">
+      <div class="radar-wrap"><svg id="radar" width="220" height="220" viewBox="0 0 220 220" role="img" aria-label="巡檢雷達"></svg></div>
+      <div class="legend">
+        <span><i style="background:var(--sweep)"></i>已巡</span>
+        <span><i style="background:var(--warn)"></i>將到期</span>
+        <span><i style="background:var(--alert)"></i>到期待巡</span>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat alert"><b id="st-due">0</b><span>到期待巡</span></div>
+      <div class="stat teal"><b id="st-jobs">0</b><span>追蹤職缺</span></div>
+      <div class="stat green"><b id="st-go">0</b><span>綠燈職缺</span></div>
+    </div>
+    <div id="backup-banner"></div>
+    <div class="card">
+      <h2>待巡清單</h2>
+      <div id="due-list"></div>
+    </div>
+    <div class="card">
+      <h2>快速掃描</h2>
+      <div class="hint" style="margin-top:0">選一個關鍵字，直達已帶入台中條件的搜尋結果頁。</div>
+      <div class="row" id="kw-picker" style="margin-top:10px"></div>
+      <div class="row" style="margin-top:10px">
+        <button class="primary grow" id="btn-li">LinkedIn 搜尋</button>
+        <button class="primary grow" id="btn-104">104 搜尋</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ TAB 2 雇主 ══════════ -->
+  <section id="tab-emp">
+    <div class="card">
+      <h2>目標雇主清單 <span class="pill" id="emp-count"></span></h2>
+      <div id="emp-list"></div>
+      <hr class="hr">
+      <button class="primary" id="btn-add-emp" style="width:100%">＋ 新增雇主</button>
+      <div class="hint">portal 網址為預填值，點「編輯」可修正。「✓ 已巡」會把該雇主的巡檢時鐘歸零。</div>
+    </div>
+  </section>
+
+  <!-- ══════════ TAB 3 職缺 ══════════ -->
+  <section id="tab-jobs">
+    <div class="card">
+      <h2>職缺攔截 <span class="pill" id="job-count"></span></h2>
+      <button class="primary" id="btn-add-job" style="width:100%">＋ 登錄新職缺</button>
+      <div id="job-form-wrap"></div>
+      <div id="job-list"></div>
+    </div>
+  </section>
+
+  <!-- ══════════ TAB 4 設定 ══════════ -->
+  <section id="tab-set">
+    <div class="card">
+      <h2>巡檢參數</h2>
+      <label class="f">巡檢週期（天）</label>
+      <input type="number" id="set-cadence" min="1" max="90">
+      <label class="f">綠燈門檻（加權星等）</label>
+      <input type="number" id="set-threshold" min="1" max="5" step="0.1">
+    </div>
+    <div class="card">
+      <h2>關鍵字（英）</h2><div class="row" id="kw-en"></div>
+      <div class="row" style="margin-top:8px"><input id="kw-en-new" class="grow" placeholder="新增英文關鍵字"><button class="small" data-add="kwEn">加入</button></div>
+    </div>
+    <div class="card">
+      <h2>關鍵字（中）</h2><div class="row" id="kw-zh"></div>
+      <div class="row" style="margin-top:8px"><input id="kw-zh-new" class="grow" placeholder="新增中文關鍵字"><button class="small" data-add="kwZh">加入</button></div>
+    </div>
+    <div class="card">
+      <h2>排除條件</h2><div class="row" id="kw-ex"></div>
+      <div class="row" style="margin-top:8px"><input id="kw-ex-new" class="grow" placeholder="新增排除詞"><button class="small" data-add="kwExclude">加入</button></div>
+      <div class="hint">排除詞用於你目視過濾；LinkedIn 搜尋連結會自動以 NOT 帶入英文排除詞。</div>
+    </div>
+    <div class="card">
+      <h2>12 點框架維度與權重</h2>
+      <div id="dim-list"></div>
+      <div class="row" style="margin-top:8px"><input id="dim-new" class="grow" placeholder="新增維度名稱"><button class="small" id="btn-add-dim">加入</button></div>
+    </div>
+    <div class="card">
+      <h2>LinkedIn Job Alerts 一次性設定</h2>
+      <div class="hint" style="margin-top:0">點下方按鈕開啟已組好的搜尋 → 頁面左上把「Job alert」開關打開即可，中英各設一組。</div>
+      <div class="row" style="margin-top:10px">
+        <button class="grow" id="btn-alert-en">英文組合搜尋</button>
+        <button class="grow" id="btn-alert-zh">中文組合搜尋</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>資料</h2>
+      <div class="row">
+        <button class="primary grow" id="btn-export">匯出 JSON 備份</button>
+        <button class="grow" id="btn-import">匯入 JSON</button>
+      </div>
+      <input type="file" id="import-file" accept="application/json" style="display:none">
+      <div class="sub" id="export-info" style="margin-top:8px"></div>
+      <hr class="hr">
+      <button class="danger" id="btn-reset" style="width:100%">重設為預設資料</button>
+      <div class="sub" style="margin-top:10px">Job Radar v1.0 · 資料只存在這台裝置的瀏覽器</div>
+    </div>
+  </section>
+</main>
+
+<nav>
+  <button data-tab="tab-radar" class="on"><span class="ic">📡</span>雷達</button>
+  <button data-tab="tab-emp"><span class="ic">🏭</span>雇主</button>
+  <button data-tab="tab-jobs"><span class="ic">🎯</span>職缺</button>
+  <button data-tab="tab-set"><span class="ic">⚙️</span>設定</button>
+</nav>
+
+<script>
+"use strict";
+const KEY="job-radar-state-v1";
+const uid=()=>Math.random().toString(36).slice(2,9);
+const today=()=>new Date().toISOString().slice(0,10);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function defaultState(){return {
+  version:1,
+  meta:{lastExport:null},
+  settings:{
+    cadenceDays:14, starThreshold:4.0,
+    kwEn:["Program Manager","PMO","Project Manager","Transformation","ERP Manager","Digital Transformation","Business Process"],
+    kwZh:["專案經理","數位轉型","ERP 經理","流程改善","智慧製造 專案"],
+    kwExclude:["ABAP Developer","Software Engineer","常駐台北"],
+    dimensions:[
+      {id:"d1",name:"Title 對齊",weight:1},{id:"d2",name:"領域匹配",weight:1},
+      {id:"d3",name:"技術能力匹配",weight:1},{id:"d4",name:"專案規模",weight:1},
+      {id:"d5",name:"地點與工作模式",weight:1},{id:"d6",name:"薪資成長軌跡",weight:1},
+      {id:"d7",name:"五年策略價值",weight:1}
+    ]
+  },
+  employers:[
+    {id:uid(),name:"Micron 美光",site:"后里 F16 / 台中",portalUrl:"https://careers.micron.com",channel:"官網",lastChecked:null,note:"已發現 PMO, Strategic Programs 台中職缺"},
+    {id:uid(),name:"Corning 康寧",site:"台中",portalUrl:"https://careers.corning.com",channel:"官網",lastChecked:null,note:"現有主力目標"},
+    {id:uid(),name:"友達 AUO",site:"台中 / 后里",portalUrl:"https://www.auo.com",channel:"官網＋104",lastChecked:null,note:""},
+    {id:uid(),name:"巨大 Giant",site:"大甲總部",portalUrl:"https://www.giantgroup-cycling.com",channel:"官網＋104",lastChecked:null,note:""},
+    {id:uid(),name:"喬山 Johnson Health Tech",site:"大雅總部",portalUrl:"https://www.johnsonhealthtech.com",channel:"官網＋104",lastChecked:null,note:""},
+    {id:uid(),name:"上銀 HIWIN",site:"台中",portalUrl:"https://www.hiwin.tw",channel:"104",lastChecked:null,note:""},
+    {id:uid(),name:"漢翔 AIDC",site:"沙鹿",portalUrl:"https://www.aidc.com.tw",channel:"官網",lastChecked:null,note:""},
+    {id:uid(),name:"美利達 Merida",site:"彰化",portalUrl:"https://www.merida.tw",channel:"104",lastChecked:null,note:""},
+    {id:uid(),name:"鼎新 Digiwin",site:"台中據點",portalUrl:"https://www.digiwin.com",channel:"官網",lastChecked:null,note:"智慧製造監測項併入"}
+  ],
+  jobs:[
+    {id:uid(),title:"PMO, Strategic Programs",employer:"Micron 美光",url:"https://careers.micron.com",location:"台中",locPass:true,scores:{},status:"評估中",note:"Notion 標記優先：JD 全文＋12 點框架",createdAt:today()}
+  ]
+};}
+
+let S;
+try{S=JSON.parse(localStorage.getItem(KEY))||defaultState();}catch(e){S=defaultState();}
+if(!S.settings||!S.employers){S=defaultState();}
+const save=()=>localStorage.setItem(KEY,JSON.stringify(S));
+
+/* ── 工具 ── */
+const daysSince=d=>d?Math.floor((new Date(today())-new Date(d))/864e5):null;
+function empStatus(e){
+  const ds=daysSince(e.lastChecked);
+  if(ds===null)return{cls:"due",label:"尚未巡過",due:true};
+  const left=S.settings.cadenceDays-ds;
+  if(left<=0)return{cls:"due",label:"到期 "+(-left)+" 天",due:true};
+  if(left<=3)return{cls:"soon",label:left+" 天後到期",due:false,soon:true};
+  return{cls:"ok",label:left+" 天後到期",due:false};
+}
+const liUrl=kw=>{
+  const ex=S.settings.kwExclude.filter(x=>/^[\x00-\x7F]+$/.test(x)).map(x=>'NOT "'+x+'"').join(" ");
+  return "https://www.linkedin.com/jobs/search/?keywords="+encodeURIComponent(kw+(ex?" "+ex:""))+"&location="+encodeURIComponent("Taichung, Taiwan");
+};
+const u104=kw=>"https://www.104.com.tw/jobs/search/?keyword="+encodeURIComponent(kw)+"&area=6001008000%2C6001010000%2C6001011000";
+function jobScore(j){
+  let sw=0,ws=0,n=0;
+  for(const d of S.settings.dimensions){
+    const v=j.scores[d.id];
+    if(v){sw+=v*d.weight;ws+=Number(d.weight)||1;n++;}
+  }
+  return{avg:ws?sw/ws:0,scored:n,total:S.settings.dimensions.length};
+}
+
+/* ── 雷達 SVG ── */
+function renderRadar(){
+  const svg=document.getElementById("radar");
+  const C=110;let s="";
+  [95,68,41].forEach(r=>s+=`<circle cx="${C}" cy="${C}" r="${r}" fill="none" stroke="#24394C"/>`);
+  s+=`<line x1="15" y1="${C}" x2="205" y2="${C}" stroke="#1B2C3C"/><line x1="${C}" y1="15" x2="${C}" y2="205" stroke="#1B2C3C"/>`;
+  s+=`<g class="sweep-g"><path d="M110 110 L110 15 A95 95 0 0 1 158 27 Z" fill="rgba(67,224,194,.18)"/><line x1="110" y1="110" x2="110" y2="15" stroke="#43E0C2" stroke-width="1.5"/></g>`;
+  const emps=S.employers;
+  emps.forEach((e,i)=>{
+    const st=empStatus(e);
+    const ang=(i/Math.max(emps.length,1))*Math.PI*2-Math.PI/2;
+    const r=45+((i*37)%45);
+    const x=C+Math.cos(ang)*r, y=C+Math.sin(ang)*r;
+    const col=st.due?"#FF6B6B":(st.soon?"#FFB454":"#43E0C2");
+    s+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4" fill="${col}"><title>${esc(e.name)}｜${st.label}</title></circle>`;
+  });
+  s+=`<circle cx="${C}" cy="${C}" r="3" fill="#43E0C2"/>`;
+  svg.innerHTML=s;
+}
+
+/* ── 雷達頁 ── */
+let activeKw=null;
+function renderHome(){
+  renderRadar();
+  const due=S.employers.filter(e=>empStatus(e).due);
+  const go=S.jobs.filter(j=>j.locPass!==false&&jobScore(j).scored===jobScore(j).total&&jobScore(j).avg>=S.settings.starThreshold);
+  document.getElementById("st-due").textContent=due.length;
+  document.getElementById("st-jobs").textContent=S.jobs.filter(j=>j.status!=="已結案"&&j.status!=="淘汰").length;
+  document.getElementById("st-go").textContent=go.length;
+  document.getElementById("due-list").innerHTML=due.length?due.map(e=>{
+    const st=empStatus(e);
+    return `<div class="emp"><div class="row"><div class="grow"><span class="name">${esc(e.name)}</span><span class="site">${esc(e.site)}</span><div class="meta">${st.label}</div></div>
+    <a class="link" href="${esc(e.portalUrl)}" target="_blank" rel="noopener"><button class="small">開官網</button></a>
+    <button class="small primary" data-check="${e.id}">✓ 已巡</button></div></div>`;
+  }).join(""):`<div class="hint" style="margin-top:0">全數在巡檢週期內，雷達淨空。下一批到期時這裡會亮紅。</div>`;
+
+  const kws=[...S.settings.kwZh,...S.settings.kwEn];
+  if(!kws.includes(activeKw))activeKw=kws[0]||"";
+  document.getElementById("kw-picker").innerHTML=kws.map(k=>`<button class="chip ${k===activeKw?"on":""}" data-kw="${esc(k)}">${esc(k)}</button>`).join("");
+
+  const daysX=daysSince(S.meta.lastExport);
+  document.getElementById("backup-banner").innerHTML=(S.meta.lastExport&&daysX<30)?"":
+    `<div class="banner"><span class="grow">⚠ ${S.meta.lastExport?("距上次備份已 "+daysX+" 天"):"尚未備份過"}。資料只存本機，換裝置或清瀏覽器就沒了。</span><button class="small warn" id="banner-export">匯出</button></div>`;
+  const be=document.getElementById("banner-export");
+  if(be)be.onclick=exportJSON;
+}
+
+/* ── 雇主頁 ── */
+let editEmp=null;
+function renderEmp(){
+  document.getElementById("emp-count").textContent=S.employers.length+" 家";
+  document.getElementById("emp-list").innerHTML=S.employers.map(e=>{
+    const st=empStatus(e);
+    if(editEmp===e.id)return `<div class="emp" data-emp="${e.id}">
+      <label class="f">雇主名稱</label><input data-f="name" value="${esc(e.name)}">
+      <label class="f">據點</label><input data-f="site" value="${esc(e.site)}">
+      <label class="f">Careers portal 網址</label><input data-f="portalUrl" value="${esc(e.portalUrl)}">
+      <label class="f">監測管道</label><input data-f="channel" value="${esc(e.channel)}">
+      <label class="f">備註</label><input data-f="note" value="${esc(e.note)}">
+      <div class="row" style="margin-top:10px">
+        <button class="small primary" data-saveemp="${e.id}">儲存</button>
+        <button class="small ghost" data-canceledit="1">取消</button>
+        <span class="grow"></span>
+        <button class="small danger" data-delemp="${e.id}">刪除</button>
+      </div></div>`;
+    return `<div class="emp"><div class="row">
+      <div class="grow"><span class="name">${esc(e.name)}</span><span class="site">${esc(e.site)}</span>
+        <div class="meta">${esc(e.channel)}｜上次巡檢 ${e.lastChecked||"—"}${e.note?"｜"+esc(e.note):""}</div></div>
+      <span class="pill ${st.cls}">${st.label}</span></div>
+      <div class="row">
+        <a class="link" href="${esc(e.portalUrl)}" target="_blank" rel="noopener"><button class="small">官網職缺</button></a>
+        <a class="link" href="${u104(activeKw||S.settings.kwZh[0]||"專案經理")}" target="_blank" rel="noopener"><button class="small">104</button></a>
+        <button class="small primary" data-check="${e.id}">✓ 已巡</button>
+        <span class="grow"></span>
+        <button class="small ghost" data-editemp="${e.id}">✎ 編輯</button>
+      </div></div>`;
+  }).join("");
+}
+
+/* ── 職缺頁 ── */
+let showJobForm=false;
+function renderJobs(){
+  const act=S.jobs.filter(j=>j.status!=="已結案").length;
+  document.getElementById("job-count").textContent=S.jobs.length+" 筆（追蹤中 "+act+"）";
+  document.getElementById("job-form-wrap").innerHTML=showJobForm?`
+    <div class="job" id="job-form">
+      <label class="f">職缺名稱</label><input id="jf-title" placeholder="例：PMO, Strategic Programs">
+      <label class="f">雇主</label><input id="jf-emp" list="emp-names" placeholder="選擇或輸入"><datalist id="emp-names">${S.employers.map(e=>`<option value="${esc(e.name)}">`).join("")}</datalist>
+      <label class="f">JD 連結</label><input id="jf-url" placeholder="https://">
+      <label class="f">地點</label><input id="jf-loc" placeholder="例：台中">
+      <label class="f">地點硬篩（台中 30km 內或遠端）</label>
+      <select id="jf-pass"><option value="1">✓ 通過</option><option value="0">✗ 未通過（直接淘汰）</option></select>
+      <div class="row" style="margin-top:12px">
+        <button class="primary grow" id="jf-save">登錄</button>
+        <button class="ghost" id="jf-cancel">取消</button>
+      </div>
+    </div>`:"";
+  document.getElementById("job-list").innerHTML=S.jobs.map(j=>{
+    const sc=jobScore(j);
+    let verdict;
+    if(j.locPass===false)verdict=`<div class="verdict out">✗ 地點硬篩未過，依紀律不投入評分</div>`;
+    else if(sc.scored<sc.total)verdict=`<div class="verdict pending">評分中 ${sc.scored}/${sc.total} 維度${sc.scored?"｜暫 "+sc.avg.toFixed(1)+" ★":""}</div>`;
+    else verdict=sc.avg>=S.settings.starThreshold
+      ?`<div class="verdict go">🟢 ${sc.avg.toFixed(1)} ★ ≥ ${S.settings.starThreshold}｜綠燈，值得投入</div>`
+      :`<div class="verdict no">🟡 ${sc.avg.toFixed(1)} ★ ＜ ${S.settings.starThreshold}｜未達門檻，按兵不動</div>`;
+    const dims=(j.locPass===false)?"":`<details class="editor"${sc.scored<sc.total?" open":""}><summary>12 點框架評分（點星）</summary>
+      ${S.settings.dimensions.map(d=>`<div class="dim"><span class="n">${esc(d.name)} <span class="sub">×${d.weight}</span></span>
+        <span class="stars">${[1,2,3,4,5].map(v=>`<button data-star="${j.id}|${d.id}|${v}" class="${(j.scores[d.id]||0)>=v?"f":""}" aria-label="${v} 星">★</button>`).join("")}</span></div>`).join("")}
+    </details>`;
+    return `<div class="job">
+      <div class="row"><div class="grow"><div class="t">${esc(j.title)}</div>
+        <div class="m">${esc(j.employer)}｜${esc(j.location||"")}｜登錄 ${j.createdAt}${j.note?"｜"+esc(j.note):""}</div>
+        ${j.url?`<a class="link" href="${esc(j.url)}" target="_blank" rel="noopener">開啟 JD ↗</a>`:""}</div>
+        <select data-status="${j.id}" style="width:auto">${["評估中","準備投遞","已投遞","面試中","已結案","淘汰"].map(s=>`<option${s===j.status?" selected":""}>${s}</option>`).join("")}</select>
+      </div>
+      ${dims}${verdict}
+      <div class="row" style="margin-top:8px"><span class="grow"></span><button class="small danger" data-deljob="${j.id}">刪除</button></div>
+    </div>`;
+  }).join("")||`<div class="hint">還沒有登錄任何職缺。巡檢時看到候選就先攔下來，讓框架替你把關。</div>`;
+}
+
+/* ── 設定頁 ── */
+function renderSet(){
+  document.getElementById("set-cadence").value=S.settings.cadenceDays;
+  document.getElementById("set-threshold").value=S.settings.starThreshold;
+  const chip=(list,key)=>list.map((k,i)=>`<button class="chip" data-rmkw="${key}|${i}">${esc(k)}<span class="x">×</span></button>`).join("")||`<span class="hint" style="margin:0">（空）</span>`;
+  document.getElementById("kw-en").innerHTML=chip(S.settings.kwEn,"kwEn");
+  document.getElementById("kw-zh").innerHTML=chip(S.settings.kwZh,"kwZh");
+  document.getElementById("kw-ex").innerHTML=chip(S.settings.kwExclude,"kwExclude");
+  document.getElementById("dim-list").innerHTML=S.settings.dimensions.map((d,i)=>`
+    <div class="row" style="margin-top:6px">
+      <input class="grow" data-dimname="${i}" value="${esc(d.name)}">
+      <input type="number" min="0.5" max="5" step="0.5" style="width:70px" data-dimw="${i}" value="${d.weight}" aria-label="權重">
+      <button class="small danger" data-rmdim="${i}">×</button>
+    </div>`).join("");
+  const dx=daysSince(S.meta.lastExport);
+  document.getElementById("export-info").textContent=S.meta.lastExport?("上次備份："+S.meta.lastExport+"（"+dx+" 天前）"):"尚未備份過";
+}
+
+/* ── 匯出入 ── */
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(S,null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="job-radar-backup-"+today()+".json";
+  a.click();URL.revokeObjectURL(a.href);
+  S.meta.lastExport=today();save();renderAll();
+}
+
+/* ── 全域渲染 ── */
+function renderAll(){renderHome();renderEmp();renderJobs();renderSet();}
+
+/* ── 事件（委派） ── */
+document.body.addEventListener("click",ev=>{
+  const b=ev.target.closest("button");if(!b)return;
+  const D=b.dataset;
+  if(D.tab){document.querySelectorAll("section").forEach(s=>s.classList.toggle("active",s.id===D.tab));document.querySelectorAll("nav button").forEach(n=>n.classList.toggle("on",n===b));window.scrollTo(0,0);return;}
+  if(D.kw){activeKw=D.kw;renderHome();renderEmp();return;}
+  if(D.check){const e=S.employers.find(x=>x.id===D.check);if(e){e.lastChecked=today();save();renderAll();}return;}
+  if(D.editemp){editEmp=D.editemp;renderEmp();return;}
+  if(D.canceledit){editEmp=null;renderEmp();return;}
+  if(D.saveemp){
+    const box=document.querySelector(`[data-emp="${D.saveemp}"]`);
+    const e=S.employers.find(x=>x.id===D.saveemp);
+    box.querySelectorAll("[data-f]").forEach(inp=>e[inp.dataset.f]=inp.value.trim());
+    editEmp=null;save();renderAll();return;
+  }
+  if(D.delemp){if(confirm("刪除這家雇主？")){S.employers=S.employers.filter(x=>x.id!==D.delemp);editEmp=null;save();renderAll();}return;}
+  if(b.id==="btn-add-emp"){const e={id:uid(),name:"新雇主",site:"",portalUrl:"https://",channel:"官網",lastChecked:null,note:""};S.employers.push(e);editEmp=e.id;save();renderEmp();return;}
+  if(b.id==="btn-add-job"){showJobForm=!showJobForm;renderJobs();return;}
+  if(b.id==="jf-cancel"){showJobForm=false;renderJobs();return;}
+  if(b.id==="jf-save"){
+    const t=document.getElementById("jf-title").value.trim();if(!t){alert("職缺名稱必填");return;}
+    const pass=document.getElementById("jf-pass").value==="1";
+    S.jobs.unshift({id:uid(),title:t,employer:document.getElementById("jf-emp").value.trim(),url:document.getElementById("jf-url").value.trim(),
+      location:document.getElementById("jf-loc").value.trim(),locPass:pass,scores:{},status:pass?"評估中":"淘汰",note:"",createdAt:today()});
+    showJobForm=false;save();renderAll();return;
+  }
+  if(D.star){const[jid,did,v]=D.star.split("|");const j=S.jobs.find(x=>x.id===jid);if(j){j.scores[did]=(j.scores[did]==v)?0:Number(v);if(!j.scores[did])delete j.scores[did];save();renderJobs();renderHome();}return;}
+  if(D.deljob){if(confirm("刪除這筆職缺？")){S.jobs=S.jobs.filter(x=>x.id!==D.deljob);save();renderAll();}return;}
+  if(D.rmkw){const[key,i]=D.rmkw.split("|");S.settings[key].splice(Number(i),1);save();renderAll();return;}
+  if(D.add){const inp=document.getElementById({kwEn:"kw-en-new",kwZh:"kw-zh-new",kwExclude:"kw-ex-new"}[D.add]);const v=inp.value.trim();if(v){S.settings[D.add].push(v);inp.value="";save();renderAll();}return;}
+  if(D.rmdim){if(S.settings.dimensions.length<=1){alert("至少保留一個維度");return;}S.settings.dimensions.splice(Number(D.rmdim),1);save();renderAll();return;}
+  if(b.id==="btn-add-dim"){const inp=document.getElementById("dim-new");const v=inp.value.trim();if(v){S.settings.dimensions.push({id:uid(),name:v,weight:1});inp.value="";save();renderAll();}return;}
+  if(b.id==="btn-li"){window.open(liUrl(activeKw),"_blank","noopener");return;}
+  if(b.id==="btn-104"){window.open(u104(activeKw),"_blank","noopener");return;}
+  if(b.id==="btn-alert-en"){window.open(liUrl(S.settings.kwEn.map(k=>'"'+k+'"').join(" OR ")),"_blank","noopener");return;}
+  if(b.id==="btn-alert-zh"){window.open(liUrl(S.settings.kwZh.join(" OR ")),"_blank","noopener");return;}
+  if(b.id==="btn-export"){exportJSON();return;}
+  if(b.id==="btn-import"){document.getElementById("import-file").click();return;}
+  if(b.id==="btn-reset"){if(confirm("確定重設？所有現有資料會被預設值覆蓋。建議先匯出備份。")){S=defaultState();save();renderAll();}return;}
+});
+document.body.addEventListener("change",ev=>{
+  const el=ev.target,D=el.dataset;
+  if(el.id==="set-cadence"){S.settings.cadenceDays=Math.max(1,Number(el.value)||14);save();renderAll();return;}
+  if(el.id==="set-threshold"){S.settings.starThreshold=Math.min(5,Math.max(1,Number(el.value)||4));save();renderAll();return;}
+  if(D.status){const j=S.jobs.find(x=>x.id===D.status);if(j){j.status=el.value;save();renderJobs();renderHome();}return;}
+  if(D.dimname!==undefined){S.settings.dimensions[Number(D.dimname)].name=el.value.trim()||"未命名";save();renderJobs();return;}
+  if(D.dimw!==undefined){S.settings.dimensions[Number(D.dimw)].weight=Number(el.value)||1;save();renderJobs();return;}
+  if(el.id==="import-file"&&el.files[0]){
+    const r=new FileReader();
+    r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.settings||!d.employers)throw 0;S=d;save();renderAll();alert("匯入完成");}catch(e){alert("匯入失敗：檔案格式不正確");}};
+    r.readAsText(el.files[0]);el.value="";
+  }
+});
+
+document.getElementById("today").textContent=new Date().toLocaleDateString("zh-TW",{year:"numeric",month:"long",day:"numeric",weekday:"long"});
+renderAll();
+
+if("serviceWorker" in navigator){navigator.serviceWorker.register("./sw.js").catch(()=>{});}
+</script>
+</body>
+</html>
